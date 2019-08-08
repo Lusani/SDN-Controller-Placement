@@ -7,11 +7,11 @@ To mimic a real SDN deployment and verify the mathematical model, the controller
 
 Python libraries: Please make sure you have installed the following python libraries:
 
-                  -igraph: this is a library collection for creating and manipulating graphs and analyzing networks
+-igraph: this is a library collection for creating and manipulating graphs and analyzing networks
                   
-                  -matplotlib:a Python plotting library
+-matplotlib:a Python plotting library
                   
-                  -numpy: a library that allows manipulation of large multi-dimensional arrays and matrices
+-numpy: a library that allows manipulation of large multi-dimensional arrays and matrices
                   
 The control plane can be implemented using ONOS, Ryu, Floodlight or OpenDayLight.However, we recommend ONOS since it has been deemed the de-facto carrier grade SDN controller.
 
