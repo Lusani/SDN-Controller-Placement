@@ -2,11 +2,11 @@
 
 This source code can be used to optimize SDN controller placement in wide area networks.
 
-The algorithms used are classical partitional algorithms namely Silhouette and Gap Statistic to determine the optimal number of controllers to deploy and PAM to find the optimal locations to place the controllers.
+The algorithms used are classical “unsupervised” machine learning algorithms namely Silhouette and Gap Statistic to determine the optimal number of controllers to deploy and PAM to find the optimal locations to place the controllers.Unsupervised algorithms learn from input data that has no labeled responses. These algorithms are classically used to analyze cluster quality through the metric of minimum distances between data points. In the context of controller placement, we leverage these algorithms to find the number of controllers that minimizes overall network propagation latency (i.e. switch-to-switch latency). To find the best locations for these controllers, we extend a facility location  algorithm called Partition Around Medoids algorithm (PAM), with propagation latency (i.e. controller-to-switch latency) as our main objective function.
 
 # SDN-Controller-Placement using Matlab
 
-To run Controller_Placement.m . Change the topology name k (number of controllers) values as desired. 
+Run Controller_Placement.m . Change the topology name k (number of controllers) values as desired. 
 
 # SDN-Controller-Placement using Emulation
 
