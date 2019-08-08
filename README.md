@@ -12,6 +12,13 @@ Python libraries: Please make sure you have installed the following python libra
 -matplotlib:a Python plotting library
                   
 -numpy: a library that allows manipulation of large multi-dimensional arrays and matrices
+
+
+Topologies:
+
+The network topologies are publicly available at Internet Topology Zoo (http://www.topology-zoo.org/). We have also included the internet2 topology on this page for convenience. 
+
+SDN Control Plane
                   
 The control plane can be implemented using ONOS, Ryu, Floodlight or OpenDayLight.However, we recommend ONOS since it has been deemed the de-facto carrier grade SDN controller.
 
@@ -58,6 +65,14 @@ In the same ONOS CLI window, type the following to active the Reactive Forwardin
                   onos> app activate org.onosproject.openflow
                   
 To verify that the apps were activated use app -a -s command
+
+Running the code:
+
+Make sure your controller is running by using  /opt/onos/bin/onos-service start
+
+Run the 
+
+
 
 
 
