@@ -1,25 +1,26 @@
+# Introduction
 
-# SDN-Controller-Placement using Matlab
-
-
-
-
-
-# SDN-Controller-Placement using Emulation
 This source code can be used to optimize SDN controller placement in wide area networks.
 
 The algorithms used are classical partitional algorithms namely Silhouette and Gap Statistic to determine the optimal number of controllers to deploy and PAM to find the optimal locations to place the controllers.
 
+# SDN-Controller-Placement using Matlab
+
+To run Controller_Placement.m . Change the topology name k (number of controllers) values as desired. 
+
+# SDN-Controller-Placement using Emulation
+
 To mimic a real SDN deployment and verify the mathematical model, the controller placement problem is addressed using Mininet Python API, an OpenFlow emulation platform. For instruction on Mininet installation, please visit http://mininet.org/download/. We strongly recommend Mininet VM installation for rapid prototyping. 
 
-Python libraries: Please make sure you have installed the following python libraries:
+# Python libraries: 
+
+Please make sure you have installed the following python libraries:
 
 -igraph: this is a library collection for creating and manipulating graphs and analyzing networks
                   
 -matplotlib:a Python plotting library
                   
 -numpy: a library that allows manipulation of large multi-dimensional arrays and matrices
-
 
 # Topologies:
 
@@ -80,6 +81,9 @@ Make sure your controller is running by using  /opt/onos/bin/onos-service start
 Run main.py script as follows:
 
               python ./main.py
+              
+The following procedure is used for each node to determine average latency: To find optimal controller locations, first we install the ONOS controller in the same geographic location as the first OpenFlow switch node (using the
+harvesine great circle approach and the Linux TC utility). The next step is to trigger a packet-In message to the controller. This is done by generating traffic flows between all pairs, i.e. between this node and all other nodes in the SANReN topology. To do this we generate a ICMP packet using the ping utility for each pair. This is followed by computation of the ICMP pinging results to obtain the total average latency (round-trip time) from the node to all other nodes in the network. This step is repeated for all nodes in the SANReN topology. To ensure valid and reliable results, we repeat the above procedure several times under a soft idle timeout for the controller entry of 5 seconds (the soft idle timeout defines the expiry time of a controller flow rule when there is no flow activity) and compute the average results. The soft idle timeout is set to ensure generation of control traffic upon pinging reiterations.
 
 
 
