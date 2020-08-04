@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+ 	Copyright (C) 2016 FhG Fokus
+
+  This file is part of the Phoenix project.
+
+  Environment variables can be used in the configuration file. Use "percent"VAR_NAME and it will be replaced with the
+  value of that environment variable. Will error if the variable is not defined.
+
+
+ -->
+<Phoenix>
+
+	<Platform>
+
+		<Debug level="%O5GC_LOG_LVL"/>
+
+		<MemoryMgmt
+		    chunk_size="1024">
+                    <ChunkManager type="msg" size_value="10" size_metric="MB" size_chunk_byte="2048" />
+                    <ChunkManager type="trans" size_value="2" size_metric="MB" size_chunk_byte="1024" />
+                    <ChunkManager type="sess" size_value="50" size_metric="MB" size_chunk_byte="6000" />
+                    <ChunkManager type="perm" size_value="2" size_metric="MB" size_chunk_byte="1024" />
+
+		    <!--ChunkManager type="msg" size_value="10" size_metric="MB" size_chunk_byte="2048" allocator="malloc"/>
+		    <ChunkManager type="trans" size_value="2" size_metric="MB" size_chunk_byte="1024" allocator="malloc"/>
+		    <ChunkManager type="sess" size_value="50" size_metric="MB" size_chunk_byte="6000" allocator="malloc"/>
+		    <ChunkManager type="perm" size_value="2" size_metric="MB" size_chunk_byte="1024" allocator="malloc"/-->
+		</MemoryMgmt>
+		<!--
+			Spawn Type 0 - Threads
+			Spawn Type 1 - Processes
+	       	-->
+		<ProcessingUnitsMgmt spawn_type="0" />
+
+		<WorkerPool count="8" queue_size="24" />
+
+	</Platform>
+
+	<Module binaryFile="modules/command/command.so">
+		<![CDATA[
+			<PhoenixCommand>
+				<Greeting text="bt>"/>
+				<Acceptor type="udp" port="10000" bind="127.0.0.1"/>
+				<Acceptor type="tcp" port="10000" bind="127.0.0.1"/>
+				<Acceptor type="udp" port="10000" bind="127.0.253.110"/>
+			</PhoenixCommand>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/s1ap/s1ap.so">
+		<![CDATA[
+	   		<S1AP threads="%O5GC_BT_S1AP_THREADS">
+	   			<Acceptor type="sctp" port="%O5GC_BT_S1AP_PORT" bind="%O5GC_BT_S1AP_BIND"/>
+			</S1AP>
+	   	]]>
+	</Module>
+
+	<Module binaryFile="modules/monitoring/monitoring.so" >
+		<![CDATA[
+                <Monitoring>
+                    <Zabbix server="%O5GC_ZABBIX_SERVER_IP" port="%O5GC_ZABBIX_SERVER_PORT" hostname="bt" interval="0" />
+                    <Flowmon node_id="bt" interval='5' enabled="0">
+					<Database
+						hostname="%O5GC_FLOWMON_DB_HOST"
+						database="%O5GC_FLOWMON_DB_NAME"
+						username="%O5GC_FLOWMON_DB_USER"
+						password="%O5GC_FLOWMON_DB_PW" />
+
+					<Capture interface="lo"
+						filter="ip or ip6"
+						node_id_suffix="local" />
+
+					<!--
+					<Capture interface="enp0s31f6"
+						filter="port 80 or port 443"
+						node_id_suffix="eth" />
+					<Capture interface="tun0"
+						filter="ip"
+						node_id_suffix="vpn" />
+					<Capture
+						interface="eth0"
+						filter="ip or ip6 and not port mysql and not port ssh"
+						node_id_suffix="" />
+					-->
+				</Flowmon>
+			</Monitoring>
+		]]>
+    </Module>
+
+	<Module binaryFile="modules/nas/nas.so" />
+
+	<Module binaryFile="modules/addressing/addressing.so" >
+		<![CDATA[
+			<Addressing time_to_live="15">
+				<Block domain="%O5GC_BT_MME_NAME.%O5GC_REALM">
+					<Address ip="%O5GC_MME_S1AP_BIND" weight="3"/>
+				</Block>
+			</Addressing>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/ofc/ofc.so">
+		<![CDATA[
+			<OpenFlowController>
+			<Features>
+				<Publish_Subscribe
+					subscriber_hash_table_size="32"
+				/>
+				<Working_Mode
+					mode="none"
+					shortest_path_enabled="false"
+				/>
+				<Topology
+					enabled="false"
+				/>
+			</Features>
+		</OpenFlowController>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/ofp/ofp.so">
+		<![CDATA[
+			<phOFP>
+
+				<Config
+					channel_htable_size="8"
+					conn_handshake_timeout="5"
+					transaction_htable_size="32"
+					transaction_timeout="5"
+					task_queue_size="64"
+					>
+
+					<OFP_Version version="5"/>
+
+					<Logical mode="controller" />
+
+					<Controller>
+						<!--
+							Acceptor* - local incoming points - only for controllers
+								type - tcp, tls, udp, dtls
+								bind - IP to bind to, optional
+								port - listening port
+								protocol - openflow
+							-->
+						<Acceptor
+							type="tcp" bind="%BT_MGMT_IP" port="6633" protocol="openflow"/>
+					</Controller>
+
+				</Config>
+
+			</phOFP>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/ofc_5g_rules/ofc_5g_rules.so">
+		<!--
+			Extension items:
+				type		String item indicating the extension type. Possible values:
+						"sgw_out"
+						"sgw_pgw"
+						"pgw_out"
+						"pgw_gtp"
+				mod_name	If GTP-U is to be used, the mod_name is expected to be "routing_gtpu".
+							If other encapsulation methods are to be used (GRE or IPIP),
+							"routing_encap" is expected.  The exact type of encapsulation
+							is specifid in this case in the protocol field.
+				protocol	Protocol to use. Used only if the mod_name parameter is "routing_encap".
+		-->
+		<![CDATA[
+		<PhoenixOfc5GRules>
+			<Extension
+				type="enb_out"
+				mod_name="routing_raw" />
+			<Extension
+				type="enb_gtp"
+				mod_name="routing_gtpu" />
+			<Config
+				layer_mode="l3"
+				sgi_mode="none" />
+		</PhoenixOfc5GRules>
+	]]>
+	</Module>
+
+	<Module binaryFile="modules/bt/bt.so" >
+		<![CDATA[
+            	<bt
+					ue_number="%O5GC_BT_UE_COUNT"
+					ue_base="%O5GC_BT_UE_BASE"
+		        	bt_session_hash_table_size="128"
+					enb_session_hash_table_size="128"
+					ue_session_hash_table_size = "128"
+					default_apn="%O5GC_DEFAULT_APN"
+					send_data_automatically = "%O5GC_BT_SEND_DATA"
+					bt_switch_running = "%O5GC_BT_BTOFS_RUNNING" >
+
+	        		<fqdnParameters
+	            			networkID="%O5GC_NETWORK_ID"
+	            			operatorID="%O5GC_OPERATOR_ID"
+	            			mmeName="%O5GC_BT_MME_NAME"/>
+
+					<EnodeB
+						tac="%O5GC_BT_ENB_1_TAC"
+						cell_id="%O5GC_BT_ENB_1_CELLID"
+						mcc="%O5GC_MCC"
+						mnc="%O5GC_MNC"
+						enb_name="%O5GC_BT_ENB_1_NAME"
+						timeout_sec="2" >
+						<S1ap
+							enodeb="%O5GC_BT_S1AP_BIND"
+							port="%O5GC_BT_S1AP_PORT"
+							mme_port="%O5GC_MME_S1AP_PORT"/>
+					</EnodeB>
+
+					<TrafficGen
+						default_tg_id = "0"
+						bt_ofs_addr = "%BTDPSW_MGMT_IP"
+						bt_ofs_port = "10000"
+						dst_addr = "%INETGW_NETA_IP"
+						ext_source_enabled = "0"
+						ext_source_url = ""
+						default_rate = "10"
+						default_packet_size = "1000" />
+            	</bt>
+		]]>
+	</Module>
+</Phoenix>

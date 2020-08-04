@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+	Copyright (C) 2016 FhG Fokus
+
+  This file is part of the Phoenix project.
+
+  Environment variables can be used in the configuration file. Use "percent"VAR_NAME and it will be replaced with the
+  value of that environment variable. Will error if the variable is not defined.
+
+
+ -->
+<Phoenix>
+
+	<Platform>
+
+		<Debug level="%O5GC_LOG_LVL"/>
+
+		<MemoryMgmt
+			chunk_size="2048"> <!-- or set size_chunk_byte="" on ChunkManager -->
+			<ChunkManager type="msg" size_value="32" size_metric="MB" />
+			<ChunkManager type="trans" size_value="32" size_metric="MB" />
+			<ChunkManager type="sess" size_value="32" size_metric="MB" />
+			<ChunkManager type="perm" size_value="32" size_metric="MB" />
+
+			<!--ChunkManager type="msg" size_value="32" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="trans" size_value="32" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="sess" size_value="32" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="perm" size_value="32" size_metric="MB" allocator="malloc"/-->
+		</MemoryMgmt>
+		<!--
+			Spawn Type 0 - Threads
+			Spawn Type 1 - Processes
+			-->
+		<ProcessingUnitsMgmt spawn_type="0" />
+
+		<WorkerPool count="4" queue_size="24" />
+
+	</Platform>
+
+	<Module binaryFile="modules/command/command.so">
+		<![CDATA[
+			<PhoenixCommand>
+				<Greeting text="pHSS>"/>
+				<Acceptor type="udp" port="10000" bind="127.0.0.1"/>
+				<Acceptor type="tcp" port="10000" bind="127.0.0.1"/>
+			</PhoenixCommand>
+		]]>
+	</Module>
+	<Module binaryFile="modules/diameter/diameter.so">
+		<![CDATA[
+			<phDiameter
+				FQDN="%O5GC_HSS_DIA_FQDN"
+				Realm="%O5GC_HSS_DIA_REALM"
+				VendorId="10415"
+				ProductName="PhoenixDiameterPeer"
+				AcceptUnknownPeers="0"
+				DropUnknownOnDisconnect="1"
+				Tc="30"
+				Workers="4"
+				QueueLength="32"
+				ConnectTimeout="5"
+				TransactionTimeout="5"
+				TransactionHashSize="64"
+				SessionsHashSize="128"
+				DefaultAuthSessionTimeout="60"
+				MaxAuthSessionTimeout="300"
+				ForwardingTableSize="64"
+				RoutingTableSize="64"
+				AVPDictHashSize="64">
+
+
+				<Peer FQDN="%O5GC_MME_DIA_FQDN" realm="%O5GC_REALM" port="%O5GC_DIA_PORT" />
+				<Acceptor type="tcp" port="%O5GC_DIA_PORT" bind="%O5GC_HSS_DIA_BIND" />
+
+				<Application type="auth" id="16777251" vendor="10415"/><!-- 3GPP S6a/S6d -->
+
+				<SupportedVendor vendor="10415" />
+
+				<Realm name="%O5GC_REALM">
+					<Route FQDN="%O5GC_MME_DIA_FQDN" app="16777251" />
+				</Realm>
+				<DefaultRoute FQDN="%O5GC_MME_DIA_FQDN" app="16777251" />
+			</phDiameter>
+		]]>
+	</Module>
+	<Module binaryFile="modules/hss/hss.so">
+		<![CDATA[
+			<HSS>
+				<Database
+					hostname="%O5GC_HSS_DB_HOST"
+					username="%O5GC_HSS_DB_USER"
+					password="%O5GC_HSS_DB_PW"
+					database="%O5GC_HSS_DB_NAME" />
+				<S6ad
+					enabled="1"
+					eventsLookupInterval="10"
+					eventsMaxActionsAtOnce="10" />
+		</HSS>
+		]]>
+	</Module>
+	<Module binaryFile="modules/mysql/mysql.so"/>
+	<Module binaryFile="modules/s6ad/s6ad.so" />
+	<Module binaryFile="modules/addressing/addressing.so" >
+		<![CDATA[
+		<Addressing time_to_live="0">
+			<Block domain="%O5GC_MME_DIA_FQDN">
+                <Address ip="%MME_MGMT_IP" weight="3"/>
+			</Block>
+		</Addressing>
+		]]>
+	</Module>
+
+</Phoenix>

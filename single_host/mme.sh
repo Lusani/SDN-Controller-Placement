@@ -1,0 +1,85 @@
+#! echo ERROR: please source this file !!! like: .
+#
+# Copyright (C) 2017 FhG Fokus
+# This file is part of the Phoenix project.
+# This file is part of the 5G!Pagoda project.
+#
+
+export O5GC_LOG_LVL=5
+
+MGMT=$MME_MGMT_IP
+NETD=$MME_NETD_IP
+
+# diameter config
+export O5GC_MME_DIA_DEFAULT_ROUTE_FQDN=$O5GC_HSS_DIA_FQDN
+
+# MME config
+export O5GC_MME_NAME="MME1.Open5GCore"
+export O5GC_MME_MCC=${O5GC_MCC}
+export O5GC_MME_MNC=${O5GC_MNC}
+export O5GC_MME_RLTV_CPCTY=100
+export O5GC_MME_GUMMEI_MMEGI=123
+export O5GC_MME_GUMMEI_MC=45
+export O5GC_MME_FEMTOCELL_ENB1_S1C=${O5GC_FEMTOCELL_S1C_1}
+export O5GC_MME_FEMTOCELL_SGW1_S1U=${O5GC_FEMTOCELL_S1U_1}
+export O5GC_MME_FEMTOCELL_ENB2_S1C=${O5GC_FEMTOCELL_S1C_2}
+export O5GC_MME_FEMTOCELL_SGW2_S1U=${DPSW_NETD_IP}
+
+export O5GC_MME_DB_HOST=${SQL_MGMT_IP}
+export O5GC_MME_DB_NAME=mme_db
+export O5GC_MME_DB_USER=mme
+export O5GC_MME_DB_PW=mme
+
+
+export O5GC_MME_FQDN_SCEFNAME=scef.mgmt
+
+# S1AP config
+export O5GC_MME_S1AP_THREADS=2
+export O5GC_MME_S1AP_PORT=${O5GC_S1AP_PORT}
+
+# PGW config
+export O5GC_PGW_DB_HOST=${SQL_MGMT_IP}
+export O5GC_PGW_DB_NAME=pgw_dn_mgmt_db
+export O5GC_PGW_DB_USER=pgw
+export O5GC_PGW_DB_PW=pgw
+export O5GC_MME_PGW_IPV4=${MGMT}
+export O5GC_MME_PGW_IPV6=
+
+# GW config
+export O5GC_MME_GW_IPV4=${MGMT}
+export O5GC_MME_GW_IPV6=
+export O5GC_MME_GW_DB_HOST=${SQL_MGMT_IP}
+export O5GC_MME_GW_DB_NAME=gw_db
+export O5GC_MME_GW_DB_USER=gw
+export O5GC_MME_GW_DB_PW=gw
+export O5GC_MME_GW_NAME=sgwc1.mgmt
+export O5GC_MME_GW_FQDN=${O5GC_MME_GW_NAME}.${O5GC_REALM}
+
+# GW Bindings config
+export O5GC_MME_GWBIND_DB_HOST=${SQL_MGMT_IP}
+export O5GC_MME_GWBIND_DB_NAME=gw_bindings_db
+export O5GC_MME_GWBIND_DB_USER=gw_bindings
+export O5GC_MME_GWBIND_DB_PW=gw_bindings
+
+# OFP config
+export O5GC_MME_OFP_BIND=${MGMT}
+export O5GC_MME_OFP_PORT=6633
+
+# GTP config
+export O5GC_MME_GTP_MME_S11C_IPV4=${MGMT}
+export O5GC_MME_GTP_MME_S11U_IPV4=${NETD}
+export O5GC_MME_GTP_MME_S11_PORT=2123
+export O5GC_MME_GTP_SGW_S11_IPV4=${MGMT}
+export O5GC_MME_GTP_SGW_S11_PORT=2124
+export O5GC_MME_GTP_PGW_S5S8_IPV4=${MGMT}
+export O5GC_MME_GTP_PGW_S5S8_PORT=2125
+export O5GC_MME_GTP_SGW_S5S8_IPV4=${MGMT}
+export O5GC_MME_GTP_SGW_S5S8_PORT=2126
+
+# DPSW config
+export O5GC_MME_DPSW_IPV4=${DPSW_S1U_IP}
+
+# TAU config
+export O5GC_MME_TAU_TAC=600
+export O5GC_MME_TAU_TIMER=240
+

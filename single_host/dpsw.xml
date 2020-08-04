@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+	Copyright (C) 2016 FhG Fokus
+
+	This file is part of the Phoenix project.
+
+	Environment variables can be used in the configuration file. Use "percent"VAR_NAME and it will be replaced with the
+	value of that environment variable. Will error if the variable is not defined.
+-->
+
+<Phoenix>
+
+	<Platform>
+
+		<Debug level="6"/>
+
+		<MemoryMgmt
+				chunk_size="32786">
+                        <ChunkManager type="msg" size_value="128" size_metric="MB" />
+                        <ChunkManager type="trans" size_value="128" size_metric="MB" />
+                        <ChunkManager type="sess" size_value="1024" size_metric="MB" />
+                        <ChunkManager type="perm" size_value="128" size_metric="MB" />
+
+			<!--ChunkManager type="msg" size_value="128" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="trans" size_value="128" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="sess" size_value="1024" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="perm" size_value="128" size_metric="MB" allocator="malloc"/-->
+		</MemoryMgmt>
+
+		<ProcessingUnitsMgmt spawn_type="0" />
+
+		<WorkerPool count="4" queue_size="16" />
+
+	</Platform>
+
+	<Module binaryFile="modules/command/command.so">
+		<![CDATA[
+			<PhoenixCommand>
+				<Greeting text="SGWU_PGWU>"/>
+				<Acceptor type="udp" port="10000" bind="127.0.0.1"/>
+				<Acceptor type="tcp" port="10000" bind="127.0.0.1"/>
+			</PhoenixCommand>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/ofp/ofp.so">
+		<![CDATA[
+			<phOFP>
+
+				<Config
+					channel_htable_size="8"
+					conn_handshake_timeout="5"
+					transaction_htable_size="32"
+					transaction_timeout="5"
+					task_queue_size="64"
+					>
+
+					<OFP_Version version="5"/>
+
+					<Logical mode="switch" />
+
+					<Switch
+						conn_retry_interval="5"
+						num_of_buffers="1000000"
+						num_of_tables="255"
+						capabilities="ffffffff"
+						reserved="ffffffff"
+						flags="0002"
+						miss_send_len="65535"
+						>
+						<Master datapath_id="%O5GC_DPSW_DATAPATH_ID" >
+							<Main	type="tcp" addr="%MME_MGMT_IP" port="%O5GC_DPSW_OFP_PORT" />
+						</Master>
+
+					</Switch>
+				</Config>
+
+			</phOFP>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/socket_eth/socket_eth.so">
+		<![CDATA[
+			<SOCKET_ETH>
+				<Config	max_num_of_ifaces="32"/>
+			</SOCKET_ETH>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/packet_proc/packet_proc.so">
+		<![CDATA[
+                        <Packet_proc>
+                                <Config pproc_method="socket_eth"/>
+                        </Packet_proc>
+                ]]>
+	</Module>
+
+	<!--
+	OFS
+		mode					- ( none | learning_switch | packet_in_no_oxm ) there is one mode witch
+								  needs to be configured for corresponding mode in ofc
+		tablemiss				- ( drop | controller ) how to deal with tablemiss matches.
+		max_num_of_ports		- maximum number of ports that can be opened on the switch (has to be the same as max_num_of_ifaces in socket_eth)
+		Interface*  			- interface should be the same id and name like id and interface in socket_eth
+		LogicalPort				- Logical Ports for additional functionality like GTP/GRE/ARP
+		Flowtable				- name as string and id in hex and hash table size as int (0 for default size of 1000)
+							  	  additionaly add optimization values for the hash table like
+							  	  (in_port, eth_src, eth_dst, ip_src, ip_dst, metadata, tunnelid)
+	-->
+
+	<Module binaryFile="modules/ofs/ofs.so">
+		<![CDATA[
+			<OpenFlowSwitch>
+				<Config
+					mode="learning_switch"
+					tablemiss="drop"
+					max_num_of_ports="32"
+					max_queue_time="0">
+
+					<Interface id="0" name="%O5GC_DPSW_IF1_NAME"/>
+					<Interface id="1" name="%O5GC_DPSW_IF2_NAME" reassemble="1" />
+					<!--Interface id="2" name="tunepc" mode="raw ip" device="tun"/-->
+
+			                <!--
+			                set logical ports here
+			                -->
+					<LogicalPort id="5" name="gre-decap" />
+					<LogicalPort id="6" name="gre-encap" />
+					<LogicalPort id="7" name="gre-encap-ipv6" />
+					<LogicalPort id="8" name="gtp-decap" />
+					<LogicalPort id="9" name="gtp-encap" />
+					<LogicalPort id="10" name="gtp-encap-ipv6" />
+
+			                <!--
+			                static flow tables with hash optimizations
+			                -->
+					<FlowTable id="0" name="Initial Table" entry_hash_size="100" hash_key="in_port" />
+					<FlowTable id="160" name="fwd2enb" entry_hash_size="100" hash_key="metadata" />
+					<FlowTable id="161" name="gtp-decap" entry_hash_size="100" hash_key="tunnelid" />
+					<FlowTable id="163" name="gtp-encap" entry_hash_size="100" hash_key="ip_dst" />
+					<FlowTable id="164" name="port->port" entry_hash_size="100" hash_key="in_port" />
+				</Config>
+			</OpenFlowSwitch>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/mysql/mysql.so"/>
+
+	<Module binaryFile="modules/monitoring/monitoring.so" >
+		<![CDATA[
+			<Monitoring>
+				<Zabbix
+					server="%O5GC_ZABBIX_SERVER_IP"
+					port="%O5GC_ZABBIX_SERVER_PORT"
+					hostname="dp_switch"
+					interval="0"/>
+				<Flowmon node_id="dp_switch" interval='5' enabled="0">
+					<!-- hostname="flowmon.o5gc.mnc001.mcc101.3gppnetwork.org" -->
+					<Database
+						hostname="%O5GC_FLOWMON_DB_HOST"
+						database="%O5GC_FLOWMON_DB_NAME"
+						username="%O5GC_FLOWMON_DB_USER"
+						password="%O5GC_FLOWMON_DB_PW" />
+
+					<Capture interface="any"
+						filter="ip or ip6 and not port mysql and not port ssh and not tcp port 10050 and not tcp port 10051"
+						node_id_suffix="" />
+
+				</Flowmon>
+			</Monitoring>
+		]]>
+	</Module>
+
+
+</Phoenix>

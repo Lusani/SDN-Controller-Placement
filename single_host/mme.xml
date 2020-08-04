@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+	Copyright (C) 2016 FhG Fokus
+
+  This file is part of the Phoenix project.
+
+  Environment variables can be used in the configuration file. Use "percent"VAR_NAME and it will be replaced with the
+  value of that environment variable. Will error if the variable is not defined.
+
+
+ -->
+<Phoenix>
+
+	<Platform>
+
+		<Debug level="%O5GC_LOG_LVL"/>
+
+		<!--MemoryMgmt >
+			<ChunkManager type="msg" size_value="50" size_metric="MB" size_chunk_byte="8096" allocator="malloc"/>
+			<ChunkManager type="trans" size_value="20" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="sess" size_value="70" size_metric="MB" allocator="malloc"/>
+			<ChunkManager type="perm" size_value="20" size_metric="MB" allocator="malloc"/-->
+		<MemoryMgmt chunk_size="4048">
+			<ChunkManager type="msg" size_value="50" size_metric="MB" />
+			<ChunkManager type="trans" size_value="20" size_metric="MB" />
+			<ChunkManager type="sess" size_value="70" size_metric="MB" />
+			<ChunkManager type="perm" size_value="20" size_metric="MB" />
+		</MemoryMgmt>
+
+		<ProcessingUnitsMgmt spawn_type="0" />
+
+		<WorkerPool count="2" queue_size="8" />
+
+	</Platform>
+
+	<Module binaryFile="modules/command/command.so">
+		<![CDATA[
+			<PhoenixCommand>
+				<Greeting text="MME-SGWC-PGWC>"/>
+				<Acceptor type="udp" port="10000" bind="127.0.0.1"/>
+				<Acceptor type="tcp" port="10000" bind="127.0.0.1"/>
+			</PhoenixCommand>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/s1ap/s1ap.so">
+		<![CDATA[
+			<S1AP threads="%O5GC_MME_S1AP_THREADS">
+				<Acceptor type="sctp" port="%O5GC_MME_S1AP_PORT" bind="%O5GC_MME_S1AP_BIND"/>
+			</S1AP>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/nas/nas.so"/>
+
+	<Module binaryFile="modules/diameter/diameter.so">
+		<![CDATA[
+				<phDiameter
+					FQDN="%O5GC_MME_DIA_FQDN"
+					Realm="%O5GC_REALM"
+					VendorId="10415"
+					ProductName="PhoenixDiameterPeer"
+					AcceptUnknownPeers="0"
+					DropUnknownOnDisconnect="1"
+					Tc="30"
+					Workers="4"
+					QueueLength="32"
+					ConnectTimeout="5"
+					TransactionTimeout="5"
+					SessionsHashSize="128"
+					DefaultAuthSessionTimeout="60"
+					MaxAuthSessionTimeout="300">
+
+					<Peer FQDN="%O5GC_HSS_DIA_FQDN" realm="%O5GC_REALM" port="%O5GC_DIA_PORT" />
+
+					<Acceptor type="tcp" port="%O5GC_DIA_PORT" bind="%O5GC_MME_DIA_BIND" />
+
+					<Application type="auth" id="16777251" vendor="10415"/> <!-- 3GPP S6a/S6d -->
+
+					<SupportedVendor vendor="10415" />
+
+					<Realm name="%O5GC_REALM">
+						<Route FQDN="%O5GC_HSS_DIA_FQDN" app="16777251" />
+					</Realm>
+
+					<DefaultRoute FQDN="%O5GC_MME_DIA_DEFAULT_ROUTE_FQDN" app="16777251" />
+
+				</phDiameter>
+			]]>
+	</Module>
+
+	<Module binaryFile="modules/s6ad/s6ad.so" />
+
+	<Module binaryFile="modules/t6ab/t6ab.so" />
+
+	<Module binaryFile="modules/gtp/gtp.so">
+		<![CDATA[
+			<GTP>
+				<Acceptor type="udp" port="%O5GC_MME_GTP_MME_S11_PORT"
+					bind="%O5GC_MME_GTP_MME_S11C_IPV4" protocol="gtpc"/>
+
+				<Acceptor type="udp" port="%O5GC_MME_GTP_SGW_S11_PORT"
+					bind="%O5GC_MME_GTP_SGW_S11_IPV4" protocol = "s11_gtp"/>
+
+				<Acceptor type="udp" port="%O5GC_MME_GTP_PGW_S5S8_PORT"
+					bind="%O5GC_MME_GTP_PGW_S5S8_IPV4" protocol="pgw_s5s8_gtp" />
+
+				<Acceptor type="udp" port="%O5GC_MME_GTP_SGW_S5S8_PORT"
+					bind="%O5GC_MME_GTP_SGW_S5S8_IPV4" protocol="sgw_s5s8_gtp" />
+
+				<Acceptor type="udp" port="2152" bind="%MME_S1C_IP" protocol = "routing_gtpu"/>
+			</GTP>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/gtp_s5s8/gtp_s5s8.so">
+		<![CDATA[
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/gtp_s11/gtp_s11.so" >
+		<![CDATA[
+			<gtp_s11>
+				<sgw_fteid_c
+					ipv4="%O5GC_MME_GW_IPV4"
+					ipv6=""
+					dst_port="%O5GC_MME_GTP_MME_S11_PORT"
+					type="11"
+					teid="10020" />
+			</gtp_s11>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/gw_bindings/gw_bindings.so">
+		<![CDATA[
+		<GW_BINDINGS
+			hash_size="16">
+		</GW_BINDINGS>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/mysql/mysql.so"/>
+
+	<Module binaryFile="modules/addressing/addressing.so" >
+		<![CDATA[
+		<Addressing time_to_live="0">
+			<Block domain="%O5GC_MME_GW_FQDN">
+				<Address ip="%O5GC_MME_GW_IPV4" weight="3"/>
+			</Block>
+			<Block domain="%O5GC_HSS_DIA_FQDN">
+				<Address ip="%HSS_MGMT_IP" weight="3"/>
+			</Block>
+
+			<Block domain="default.apn" service="x-3gpp-pgw:x-s5-gtp">
+				<Address ip="%O5GC_MME_PGW_IPV4" weight="3"/>
+			</Block>
+			<Block domain="internet.apn" service="x-3gpp-pgw:x-s5-gtp">
+				<Address ip="%O5GC_MME_PGW_IPV4" weight="3"/>
+			</Block>
+			<Block domain="ims.apn" service="x-3gpp-pgw:x-s5-gtp">
+				<Address ip="%O5GC_MME_PGW_IPV4" weight="3"/>
+			</Block>
+		</Addressing>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/mme/mme.so">
+		<![CDATA[
+			<MME
+				s11c_mme="%O5GC_MME_GTP_MME_S11C_IPV4"
+				s11u_mme="%O5GC_MME_GTP_MME_S11U_IPV4"
+				s11_dst_port="%O5GC_MME_GTP_SGW_S11_PORT"
+				s6a_mme="%O5GC_MME_DIA_BIND"
+				s1ap_mme="%O5GC_MME_S1AP_BIND"
+				hash_size="200"
+				monitoring="no"
+				ipv6_workaround="yes"
+				relative_capacity="%O5GC_MME_RLTV_CPCTY"
+				ho_relocation="no" >
+
+				<GUMMEI
+					mcc="%O5GC_MME_MCC"
+					mnc="%O5GC_MME_MNC"
+					mmegi="%O5GC_MME_GUMMEI_MMEGI"
+					mmec="%O5GC_MME_GUMMEI_MC"
+					mme_name="%O5GC_MME_NAME" />
+
+				<Femtocell
+					enb_s1c="%O5GC_MME_FEMTOCELL_ENB1_S1C"
+					sgw_s1u="%O5GC_MME_FEMTOCELL_SGW1_S1U"
+					mtu="1400" />
+				<Femtocell
+					enb_s1c="%O5GC_MME_FEMTOCELL_ENB2_S1C"
+					sgw_s1u="%O5GC_MME_FEMTOCELL_SGW2_S1U"
+					mtu="1400" />
+
+				<Security
+					eea="0"
+					eia="1" />
+
+				<Timers
+					tau="%O5GC_MME_TAU_TIMER" />
+
+				<TAU>
+					<TAI_of_last_tau mcc="%O5GC_MME_MCC" mnc="%O5GC_MME_MNC" tac="%O5GC_MME_TAU_TAC" />
+				</TAU>
+
+
+				<Database
+					hostname="%O5GC_MME_DB_HOST"
+					database="%O5GC_MME_DB_NAME"
+					username="%O5GC_MME_DB_USER"
+					password="%O5GC_MME_DB_PW"
+
+					session_list_storage="no"
+					imsi_tmsi_mapping_storage="no"/>
+
+				<fqdnParameters
+					networkID="%O5GC_NETWORK_ID"
+					operatorID="%O5GC_OPERATOR_ID"
+					sgwcName="%O5GC_MME_GW_NAME"/>
+
+				<networkInfo
+					shortName="%O5GC_NETWORK_ID"
+					fullName="Open5GCore"
+					UTCTimeZone="1" />
+			</MME>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/pgw/pgw.so">
+		<!-- PGW Parameters
+			- ipv4 - IPv4 address to identify this PGW to the MAGs
+			- ipv6 - IPv6 address to identify this PGW to the MAGs
+			- hash_size - hash size for the binding cache hash table. default is 32 (optional)
+			- seamless - use seamless handovers or not (1-yes, 0-no). default is 1 (optional)
+			-->
+		<![CDATA[
+		<PGW
+			ipv4="%O5GC_MME_PGW_IPV4"
+			ipv6="%O5GC_MME_PGW_IPV6"
+			s5s8_dst_port="%O5GC_MME_GTP_SGW_S5S8_PORT"
+			hash_size="32"
+			seamless="1">
+			<Database
+				hostname="%O5GC_PGW_DB_HOST"
+				username="%O5GC_PGW_DB_USER"
+				password="%O5GC_PGW_DB_PW"
+				database="%O5GC_PGW_DB_NAME" />
+			<Volte pcscf_addr="192.168.1.51"/>
+		</PGW>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/gw/gw.so" >
+		<![CDATA[
+		<!--
+		 Gw Parameters
+		  Mandatory patameters:
+		  - default_apn - Default APN to be used by this Gw
+		  - ipcan - IP Connectivity Access Network
+			IPCAN_3GPP_GPRS         = 0,
+			IPCAN_DOCSIS            = 1,
+			IPCAN_xDSL                      = 2,
+			IPCAN_WiMAX                     = 3,
+			IPCAN_3GPP2                     = 4,
+			IPCAN_3GPP_EPS          = 5,
+			IPCAN_Non_3GPP_EPS      = 6,
+		  - rat - radio access technology
+			RAT_WLAN                                = 0,
+			RAT_UTRAN                               = 1000,
+			RAT_GERAN                               = 1001,
+			RAT_GAN                                 = 1002,
+			RAT_HSPA_Evolution              	= 1003,
+			RAT_EUTRAN                              = 1004,
+			RAT_CDMA2000_1X                 	= 2000,
+			RAT_HRPD                                = 2001,
+			RAT_UMB                                 = 2002,
+			RAT_EHRPD                               = 2003,
+		  Optional parameters:
+		  - ipv4 - IPv4 address to identify this Gw to the PGW
+		  - ipv6 - IPv6 address to identify this Gw to the PGW
+		  - lifetime - lifetime in seconds for a binding cache entry (not used currently). default is 300
+		  - hash_size - hash size for the binding update list. default is 32
+		  - pgw_list - flag for enabling LMA hand-overs or not. default is 0
+		  - first_teid - teid value at which to begin the counting. default is 0
+
+		 -->
+
+		<Gw
+			default_apn="default"
+			ipcan="5"
+			rat="1000"
+			ipv4="%O5GC_MME_GW_IPV4"
+			ipv6="%O5GC_MME_GW_IPV6"
+			lifetime="300"
+			hash_size="32"
+			pgw_list="0"
+			>
+
+			<!--
+				Default PGW to contact. Currently multiple PGWs are supported. No default PGW is needed, as long as
+				there is at least one entry in the pgw_list table in the database. If that
+				table is empty, the Gw will try to use the default PGW supplied with this file.
+			-->
+			<DefaultPGW
+				ipv4="%O5GC_MME_PGW_IPV4"
+				ipv6=""
+				port="%O5GC_MME_GTP_PGW_S5S8_PORT"/>
+
+		</Gw>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/ofc_5g_rules/ofc_5g_rules.so">
+		<!--
+			Extension items:
+				type		String item indicating the extension type. Possible values:
+						"sgw_out"
+						"sgw_pgw"
+						"pgw_out"
+						"pgw_gtp"
+				mod_name	If GTP-U is to be used, the mod_name is expected to be "routing_gtpu".
+							If other encapsulation methods are to be used (GRE or IPIP),
+							"routing_encap" is expected.  The exact type of encapsulation
+							is specifid in this case in the protocol field.
+				protocol	Protocol to use. Used only if the mod_name parameter is "routing_encap".
+		-->
+		<![CDATA[
+		<PhoenixOfc5GRules>
+			<Extension
+				type="pgw_out"
+				mod_name="routing_encap"
+				protocol="gre" />
+			<Extension
+				type="pgw_gtp"
+				mod_name="routing_gtpu" />
+			<!-- Config item configuration -->
+			<Config
+				layer_mode="l3"
+				sgi_mode="none" 
+				new_ver_enabled="2" />
+		</PhoenixOfc5GRules>
+			]]>
+	</Module>
+
+	<Module binaryFile="modules/ofp/ofp.so">
+		<![CDATA[
+			<phOFP>
+				<Config
+					channel_htable_size="8"
+					conn_handshake_timeout="5"
+					transaction_htable_size="8"
+					transaction_timeout="2"
+					task_queue_size="8"
+					>
+					<OFP_Version version="5"/>
+					<Logical mode="controller" />
+					<Controller>
+						<Acceptor type="tcp" bind="%O5GC_MME_OFP_BIND" port="%O5GC_MME_OFP_PORT" protocol="openflow"/>
+					</Controller>
+				</Config>
+			</phOFP>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/ofc/ofc.so">
+		<![CDATA[
+			<OpenFlowController>
+			<Features>
+				<Publish_Subscribe subscriber_hash_table_size="32" />
+				<Working_Mode mode="none" />
+				<Topology enabled="false" />
+			</Features>
+		</OpenFlowController>
+		]]>
+	</Module>
+
+		<Module binaryFile="modules/monitoring/monitoring.so" >
+			<![CDATA[
+				<Monitoring>
+					<Zabbix server="%O5GC_ZABBIX_SERVER_IP" port="%O5GC_ZABBIX_SERVER_PORT" hostname="mme1" interval="0" />
+					<Flowmon node_id="mme1" interval='1' enabled="0">
+					<Database
+						hostname="%O5GC_FLOWMON_DB_HOST"
+						database="%O5GC_FLOWMON_DB_NAME"
+						username="%O5GC_FLOWMON_DB_USER"
+						password="%O5GC_FLOWMON_DB_PW" />
+				</Flowmon>
+			</Monitoring>
+		]]>
+	</Module>
+	<Module binaryFile="modules/edge_sync/edge_sync.so">
+		<![CDATA[
+		<Edge_sync
+				state_sharing_enabled="no" >
+		</Edge_sync>
+	   ]]>
+	</Module>
+	<Module binaryFile="modules/sdn_routing_topology/sdn_routing_topology.so">
+		<![CDATA[
+			<sdn_routing_topology static_mode="1">
+				<Topology>
+
+					<!--Default link-->
+					<Link weight="1">
+						<Node_A type="enodeB" id="" port="" ip="unspecified" />
+						<Node_B type="switch" id="257" port="1" ip="%O5GC_MME_DPSW_IPV4" />
+					</Link>
+					<!--/Default link-->
+
+					<!--for each apn an entry with dummy ip is needed ...-->
+					<Link weight="1">
+						<Node_A type="switch" id="257" port="0" ip="%O5GC_MME_DPSW_IPV4"/>
+						<Node_B type="apn" id="default" port="0" ip="1.2.3.4"/>
+					</Link>
+					<Link weight="1">
+						<Node_A type="switch" id="257" port="0" ip="%O5GC_MME_DPSW_IPV4"/>
+						<Node_B type="apn" id="internet" port="0" ip="1.2.3.4"/>
+					</Link>
+					<Link weight="1">
+						<Node_A type="switch" id="257" port="0" ip="%O5GC_MME_DPSW_IPV4"/>
+						<Node_B type="apn" id="ims" port="0" ip="1.2.3.4"/>
+					</Link>
+
+				</Topology>
+			</sdn_routing_topology>
+		]]>
+	</Module>
+
+	<Module binaryFile="modules/routing_gtpu/routing_gtpu.so" />
+	<Module binaryFile="modules/routing/routing.so" >
+		<![CDATA[
+		<Routing hash_size="64">
+			<!--
+				Extension id is a string with one of the values: "sgw_out", "sgw_pgw", "pgw_out", "pgw_gtp", "enb_out", "enb_gtp", "angw_out", "angw_gtp"
+				where
+				_gtp means it is towards a gtp encapsulated interface
+				_out means it is out of the core network: pgw_out is towards the internet and enb/angw_out is towards the UE
+			-->
+			<Extension id="enb_gtp" src_table="teid" mod_name="routing_gtpu">
+				<Acceptor type="udp" protocol="gre" intf_name="%MME_S1C_IF" bind="%MME_S1C_IP" port="2152"/>
+			</Extension>
+		</Routing>
+		]]>
+	</Module>
+
+</Phoenix>

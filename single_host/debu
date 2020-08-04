@@ -1,0 +1,99 @@
+---------------------------------------------------------------------------------------------
+root@ubuntu:/opt/single_host# iptables -t nat -L -n -v
+Chain PREROUTING (policy ACCEPT 15813 packets, 1842K bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain INPUT (policy ACCEPT 7 packets, 454 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain OUTPUT (policy ACCEPT 4255 packets, 332K bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain POSTROUTING (policy ACCEPT 114 packets, 7143 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+ 4226  330K MASQUERADE  all  --  *      !vhost0  192.168.4.0/24       0.0.0.0/0           
+    0     0 MASQUERADE  all  --  *      !vhost0  192.168.4.0/24       0.0.0.0/0           
+
+-----------------------------------------------------------------------------------------------
+root@ubuntu:/opt/single_host# ifconfig 
+ens3      Link encap:Ethernet  HWaddr fa:16:3e:41:22:a1  
+          inet addr:172.16.1.6  Bcast:172.16.1.255  Mask:255.255.255.0
+          inet6 addr: fe80::f816:3eff:fe41:22a1/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1450  Metric:1
+          RX packets:5429964 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:1356153 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:377498872 (377.4 MB)  TX bytes:18539401839 (18.5 GB)
+
+ens4      Link encap:Ethernet  HWaddr fa:16:3e:85:a2:03  
+          inet addr:11.0.0.26  Bcast:11.0.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::f816:3eff:fe85:a203/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:17488 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:557 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:2252678 (2.2 MB)  TX bytes:49302 (49.3 KB)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:463807 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:463807 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1 
+          RX bytes:18436363509 (18.4 GB)  TX bytes:18436363509 (18.4 GB)
+
+vdpsw0    Link encap:Ethernet  HWaddr 72:94:1e:f4:e7:ac  
+          inet6 addr: fe80::7094:1eff:fef4:e7ac/64 Scope:Link
+          UP BROADCAST RUNNING NOARP MULTICAST  MTU:1500  Metric:1
+          RX packets:16458 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:3 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:1751942 (1.7 MB)  TX bytes:210 (210.0 B)
+
+vhost0    Link encap:Ethernet  HWaddr 8e:9b:3d:b0:db:26  
+          inet6 addr: fe80::8c9b:3dff:feb0:db26/64 Scope:Link
+          UP BROADCAST RUNNING NOARP MULTICAST  MTU:1500  Metric:1
+          RX packets:3 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:16458 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:210 (210.0 B)  TX bytes:1751942 (1.7 MB)
+--------------------------------------------------------------------------------------------------
+root@ubuntu:/opt/single_host# sysctl -a | grep forwarding
+net.ipv4.conf.all.forwarding = 1
+net.ipv4.conf.all.mc_forwarding = 0
+net.ipv4.conf.default.forwarding = 1
+net.ipv4.conf.default.mc_forwarding = 0
+net.ipv4.conf.ens3.forwarding = 1
+net.ipv4.conf.ens3.mc_forwarding = 0
+net.ipv4.conf.ens4.forwarding = 1
+net.ipv4.conf.ens4.mc_forwarding = 0
+net.ipv4.conf.lo.forwarding = 1
+net.ipv4.conf.lo.mc_forwarding = 0
+net.ipv4.conf.vdpsw0.forwarding = 1
+net.ipv4.conf.vdpsw0.mc_forwarding = 0
+net.ipv4.conf.vhost0.forwarding = 1
+net.ipv4.conf.vhost0.mc_forwarding = 0
+sysctl: reading key "net.ipv6.conf.all.stable_secret"
+net.ipv6.conf.all.forwarding = 0
+net.ipv6.conf.all.mc_forwarding = 0
+sysctl: net.ipv6.conf.default.forwarding = 0
+net.ipv6.conf.default.mc_forwarding = 0
+reading key "net.ipv6.conf.default.stable_secret"
+sysctl: reading key "net.ipv6.conf.ens3.stable_secret"
+net.ipv6.conf.ens3.forwarding = 0
+net.ipv6.conf.ens3.mc_forwarding = 0
+sysctl: net.ipv6.conf.ens4.forwarding = 0
+net.ipv6.conf.ens4.mc_forwarding = 0
+reading key "net.ipv6.conf.ens4.stable_secret"
+sysctl: reading key "net.ipv6.conf.lo.stable_secret"net.ipv6.conf.lo.forwarding = 0
+net.ipv6.conf.lo.mc_forwarding = 0
+
+sysctl: net.ipv6.conf.vdpsw0.forwarding = 0
+net.ipv6.conf.vdpsw0.mc_forwarding = 0
+reading key "net.ipv6.conf.vdpsw0.stable_secret"
+sysctl: net.ipv6.conf.vhost0.forwarding = 0
+net.ipv6.conf.vhost0.mc_forwarding = 0
+reading key "net.ipv6.conf.vhost0.stable_secret"
+
+
